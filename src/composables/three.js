@@ -4,6 +4,8 @@ import Stats from "three/examples/jsm/libs/stats.module";
 
 export default function useThree() {
   const scene = new THREE.Scene();
+  const pointer = new THREE.Vector2();
+  const raycaster = new THREE.Raycaster();
 
   const camera = new THREE.PerspectiveCamera(
     50,
@@ -11,8 +13,9 @@ export default function useThree() {
     1,
     1000
   );
-  camera.position.z = 96;
+  camera.position.z = 20;
   const canvas = document.getElementById("webgl");
+
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -29,19 +32,39 @@ export default function useThree() {
   spotLight.position.set(0, 64, 32);
   scene.add(spotLight);
 
-  const boxGeometry = new THREE.BoxGeometry(16, 16, 16);
-  const boxMaterial = new THREE.MeshNormalMaterial();
-  const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
-  scene.add(boxMesh);
+
+  const addCubes = (x, y, z) => {
+    const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const boxMaterial = new THREE.MeshBasicMaterial(0xfffff);
+    const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+    boxMesh.position.set(x, y, z)
+    scene.add(boxMesh);
+  }
 
   const controls = new OrbitControls(camera, renderer.domElement);
 
   const stats = Stats();
   document.body.appendChild(stats.dom);
 
+  const onMouseMove = (event) => {
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects(scene.children)
+
+    for (let i = 0; i < intersects.length; i++) {
+      if (intersects[0].object.material.color != 0xff0000) {
+        intersects[0].object.material.color.set(0xff0000)
+      } else {
+        intersects[0].object.material.color.set(0xfffff)
+      }
+
+    }
+
+  }
+
   const animate = () => {
-    boxMesh.rotation.x += 0.01;
-    boxMesh.rotation.y += 0.01;
     stats.update();
     controls.update();
     renderer.render(scene, camera);
@@ -49,6 +72,8 @@ export default function useThree() {
   };
 
   return {
+    addCubes,
     animate,
+    onMouseMove
   };
 }
